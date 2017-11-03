@@ -56,12 +56,22 @@ export default class Emitter {
 		return this.on(...args);
 	}
 
+	waitFor(type) {
+		return new Promise((resolve) => {
+			const listener = (...args) => {
+				resolve(args);
+			};
+			this.on(type, listener);
+		});
+	}
+
 	removeListener(type, listener) {
 		const finalListener = this._listeners.get(listener);
 		if (finalListener) {
 			this._listeners.delete(listener);
 			this._eventEmitter.removeListener(type, finalListener);
 		}
+		return this;
 	}
 
 	emit(type, ...args) {

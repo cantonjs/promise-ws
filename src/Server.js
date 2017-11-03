@@ -61,6 +61,19 @@ export default class Server {
 		return this;
 	}
 
+	addListener(...args) {
+		return this.on(...args);
+	}
+
+	waitFor(type) {
+		return new Promise((resolve) => {
+			const listener = (...args) => {
+				resolve(args);
+			};
+			this.on(type, listener);
+		});
+	}
+
 	_forEach(iterator) {
 		this._wss.clients.forEach((ws) => {
 			if (ws.readyState === WebSocket.OPEN) {

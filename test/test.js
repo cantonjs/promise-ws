@@ -74,3 +74,17 @@ test('server -> clients', async () => {
 	expect(handleClientSay2.mock.calls.length).toBe(1);
 	expect(res).toEqual(expect.arrayContaining([1, 2]));
 });
+
+test('waitFor()', async () => {
+	const port = 3000;
+
+	server = await Server.create({ port });
+	const client = await connect(`ws://127.0.0.1:${port}`);
+
+	setTimeout(() => {
+		client.emit('hello', 'world');
+	}, 10);
+
+	const [res] = await server.waitFor('hello');
+	expect(res).toBe('world');
+});
