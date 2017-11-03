@@ -1,7 +1,7 @@
 {
   "name": "promise-ws",
-  "description": "A promise based WebSocket implementation",
-  "version": "0.0.0",
+  "description": "A Promise-Based WebSocket implementation for Node.js",
+  "version": "0.0.0-0",
   "main": "lib/index",
   "files": [
     "*.md",
@@ -19,7 +19,16 @@
   "engines": {
     "node": ">=4.2.1"
   },
-  "keywords": [],
+  "keywords": [
+    "websocket",
+    "ws",
+    "promise",
+    "io",
+    "request",
+    "response",
+    "connect",
+    "socket"
+  ],
   "license": "MIT",
   "dependencies": {
     "pify": "^3.0.0",
