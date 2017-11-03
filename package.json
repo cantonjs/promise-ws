@@ -1,5 +1,5 @@
 {
-  "name": "io-x",
+  "name": "promise-ws",
   "description": "A promise based WebSocket implementation",
   "version": "0.0.0",
   "main": "lib/index",
@@ -15,7 +15,7 @@
     "preversion": "yarn test && yarn build"
   },
   "author": "Cap32",
-  "repository": "cantonjs/io-x",
+  "repository": "cantonjs/promise-ws",
   "engines": {
     "node": ">=4.2.1"
   },
