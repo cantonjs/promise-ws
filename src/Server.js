@@ -97,6 +97,10 @@ export default class Server {
 		return this;
 	}
 
+	wss() {
+		return this._wss;
+	}
+
 	close() {
 		clearInterval(this._heartbeatInterval);
 		return pify(::this._wss.close)();

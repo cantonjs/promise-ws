@@ -141,6 +141,10 @@ export default class Client {
 		});
 	}
 
+	ws() {
+		return this._ws;
+	}
+
 	close() {
 		this._ws.terminate();
 		this._ws = null;

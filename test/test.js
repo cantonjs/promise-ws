@@ -1,6 +1,7 @@
 
 import { Server, Client } from '../src';
 import delay from 'delay';
+import WebSocket from 'ws';
 
 let _server;
 let _clients = [];
@@ -133,6 +134,13 @@ describe('client methods', () => {
 		await server.emit('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(0);
 	});
+
+	test('client.ws()', async () => {
+		const port = 3000;
+		await createServer({ port });
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		expect(client.ws()).toBeInstanceOf(WebSocket);
+	});
 });
 
 describe('server methods', () => {
@@ -203,5 +211,11 @@ describe('server methods', () => {
 		server.removeListener('say', handleSay);
 		await client.emit('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(0);
+	});
+
+	test('server.wss()', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		expect(server.wss()).toBeInstanceOf(WebSocket.Server);
 	});
 });
