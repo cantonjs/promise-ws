@@ -49,10 +49,16 @@ export default class Client {
 				if (!_id) { throw new Error(); }
 
 				if (type) {
-					this._inputCallbacks.set(_id, (responseData) => {
-						this._inputCallbacks.delete(_id);
-						ws.send(JSON.stringify({ _id, responseData }));
-					});
+					const hasListener = this._eventEmitter.listenerCount(type) > 0;
+					if (hasListener) {
+						this._inputCallbacks.set(_id, (responseData) => {
+							this._inputCallbacks.delete(_id);
+							ws.send(JSON.stringify({ _id, responseData }));
+						});
+					}
+					else {
+						ws.send(JSON.stringify({ _id }));
+					}
 					this._eventEmitter.emit(type, _id, ...args);
 				}
 				else if (this._outputCallbacks.has(_id)) {

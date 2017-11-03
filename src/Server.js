@@ -54,7 +54,7 @@ export default class Server {
 	}
 
 	on(...args) {
-		this._clients.forEach((client) => {
+		this._forEach((client) => {
 			client.on(...args);
 		});
 		return this;
