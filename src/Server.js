@@ -30,9 +30,8 @@ export default class Server {
 			ws.isAlive = true;
 			ws.on('pong', heartbeat);
 
-			// TODO
 			ws.on('close', () => {
-				// console.log('closed');
+				this._emitters.delete(ws);
 			});
 
 			const emitter = new Emitter(ws);

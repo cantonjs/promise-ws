@@ -1,27 +1,47 @@
 
 import WebSocket from 'ws';
 import Emitter from './Emitter';
+import { isFunction, isString } from './utils';
 
 export default class Client extends Emitter {
-	static connect(url) {
+	static create(options = {}) {
 		return new Promise((resolve, reject) => {
-			const ws = new WebSocket(url);
-			const connection = new Client(ws, (err) => {
+			if (isString(options)) { options = { url: options }; }
+			const ws = new WebSocket(options.url);
+			const connection = new Client(ws, options, (err) => {
 				if (err) { reject(err); }
 				else { resolve(connection); }
 			});
 		});
 	}
 
-	constructor(ws, callback) {
+	static connect(url, waitUntil) {
+		return new Promise(async (resolve, reject) => {
+			try {
+				const client = await Client.create({ url, onClose: reject });
+				const res = await waitUntil(client);
+				resolve(res);
+			}
+			catch (err) {
+				reject(err);
+			}
+		});
+	}
+
+	constructor(ws, options, callback) {
 		super(ws);
+
+		const {
+			onClose,
+		} = options;
 
 		this._ws = ws;
 
-		// TODO
-		ws.on('close', () => {
-			// console.log('closed');
-		});
+		if (isFunction(onClose)) {
+			ws.on('close', () => {
+				onClose(new Error('CLOSE'));
+			});
+		}
 
 		ws.on('open', callback);
 		ws.on('error', callback);
