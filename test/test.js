@@ -77,12 +77,12 @@ describe('client methods', () => {
 	test('client.emit() and wait for response', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
-		const client = await createClient(`ws://127.0.0.1:${port}`);
 		server.on('say', async (data) => {
 			expect(data).toBe('hello');
 			delay(10);
 			return 'world';
 		});
+		const client = await createClient(`ws://127.0.0.1:${port}`);
 		const res = await client.emit('say', 'hello');
 		expect(res).toBe('world');
 	});

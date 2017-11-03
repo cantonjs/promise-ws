@@ -21,6 +21,7 @@ export default class Server {
 
 		this._wss = wss;
 		this._clients = new Map();
+		this._listeners = new Map();
 
 		function heartbeat() {
 			this.isAlive = true;
@@ -36,6 +37,10 @@ export default class Server {
 
 			const client = new Client(ws);
 			this._clients.set(ws, client);
+
+			this._listeners.forEach((type, listener) => {
+				client.on(type, listener);
+			});
 		});
 
 		this._heartbeatInterval = setInterval(() => {
@@ -53,9 +58,10 @@ export default class Server {
 		wss.on('error', callback);
 	}
 
-	on(...args) {
+	on(type, listener) {
+		this._listeners.set(listener, type);
 		this._forEach((client) => {
-			client.on(...args);
+			client.on(type, listener);
 		});
 		return this;
 	}
@@ -90,9 +96,10 @@ export default class Server {
 		return Promise.all(promises);
 	}
 
-	removeListener(...args) {
+	removeListener(type, listener) {
+		this._listeners.delete(listener);
 		this._forEach((client) => {
-			client.removeListener(...args);
+			client.removeListener(type, listener);
 		});
 		return this;
 	}
