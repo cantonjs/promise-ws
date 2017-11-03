@@ -8,9 +8,10 @@ export default class Client {
 		return new Promise((resolve, reject) => {
 			if (isString(options)) { options = { url: options }; }
 			const ws = new WebSocket(options.url);
-			const connection = new Client(ws, options, (err) => {
-				if (err) { reject(err); }
-				else { resolve(connection); }
+			const connection = new Client(ws, {
+				...options,
+				onOpen() { resolve(connection); },
+				onError: reject,
 			});
 		});
 	}
@@ -28,9 +29,11 @@ export default class Client {
 		});
 	}
 
-	constructor(ws, options, callback) {
+	constructor(ws, options = {}) {
 		const {
 			onClose,
+			onOpen,
+			onError,
 		} = options;
 
 		this._inputCallbacks = new Map();
@@ -71,8 +74,8 @@ export default class Client {
 			});
 		}
 
-		ws.on('open', callback);
-		ws.on('error', callback);
+		if (isFunction(onOpen)) { ws.on('open', onOpen); }
+		if (isFunction(onError)) { ws.on('error', onError); }
 	}
 
 

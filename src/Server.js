@@ -1,7 +1,7 @@
 
 import WebSocket from 'ws';
 import pify from 'pify';
-import Emitter from './Emitter';
+import Client from './Client';
 
 export default class Server {
 	static async create(options) {
@@ -20,7 +20,7 @@ export default class Server {
 		});
 
 		this._wss = wss;
-		this._emitters = new Map();
+		this._clients = new Map();
 
 		function heartbeat() {
 			this.isAlive = true;
@@ -31,11 +31,11 @@ export default class Server {
 			ws.on('pong', heartbeat);
 
 			ws.on('close', () => {
-				this._emitters.delete(ws);
+				this._clients.delete(ws);
 			});
 
-			const emitter = new Emitter(ws);
-			this._emitters.set(ws, emitter);
+			const client = new Client(ws);
+			this._clients.set(ws, client);
 		});
 
 		this._heartbeatInterval = setInterval(() => {
@@ -54,8 +54,8 @@ export default class Server {
 	}
 
 	on(...args) {
-		this._emitters.forEach((emitter) => {
-			emitter.on(...args);
+		this._clients.forEach((client) => {
+			client.on(...args);
 		});
 		return this;
 	}
@@ -76,23 +76,23 @@ export default class Server {
 	_forEach(iterator) {
 		this._wss.clients.forEach((ws) => {
 			if (ws.readyState === WebSocket.OPEN) {
-				const emitter = this._emitters.get(ws);
-				if (emitter) { iterator(emitter); }
+				const client = this._clients.get(ws);
+				if (client) { iterator(client); }
 			}
 		});
 	}
 
 	emit(...args) {
 		const promises = [];
-		this._forEach((emitter) => {
-			promises.push(emitter.emit(...args));
+		this._forEach((client) => {
+			promises.push(client.emit(...args));
 		});
 		return Promise.all(promises);
 	}
 
 	removeListener(...args) {
-		this._forEach((emitter) => {
-			emitter.removeListener(...args);
+		this._forEach((client) => {
+			client.removeListener(...args);
 		});
 		return this;
 	}
