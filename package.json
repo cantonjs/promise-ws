@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "start": "yarn test -- --watchAll",
-    "test": "cross-env NODE_ENV=development jest",
+    "test": "cross-env NODE_ENV=development jest --coverage",
     "prebuild": "rimraf lib",
     "build": "babel src -d lib",
     "preversion": "yarn test && yarn build"
