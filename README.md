@@ -12,12 +12,12 @@ import { Server, Client } from 'promise-ws';
   const port = 3000;
   const server = await Server.create({ port });
   const client = await Client.create(`ws://127.0.0.1:${port}`);
-  server.on('say', async (data) => {
+  server.reply('say', async (data) => {
     console.log('data'); /* 'hello' */
     return 'world';
   });
-  const res = await client.emit('say', 'hello');
-  console.log(res); /* 'world' */
+  const response = await client.request('say', 'hello');
+  console.log(response); /* 'world' */
 }());
 ```
 
