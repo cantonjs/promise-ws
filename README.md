@@ -163,6 +163,9 @@ Stops the server.
 The connected clients.
 
 
+---
+
+
 <a name="clientcreateaddress-options"></a>
 ### Client.create(address[, options])
 
