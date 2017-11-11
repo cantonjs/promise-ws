@@ -1,7 +1,9 @@
 
 import { Server, Client } from '../src';
 import delay from 'delay';
+import net from 'net';
 import WebSocket from 'ws';
+import pify from 'pify';
 
 let _server;
 let _clients = [];
@@ -24,6 +26,13 @@ const connectClient = async (url, waitUntil) => {
 	});
 };
 
+const autoReconnectClient = async (url, waitUntil) => {
+	return Client.autoReconnect(url, async (client) => {
+		_clients.push(client);
+		return waitUntil(client);
+	});
+};
+
 afterEach(async () => {
 	await Promise.all(_clients.map(async (client) => client.close()));
 	await _server.close().catch(() => {});
@@ -31,20 +40,20 @@ afterEach(async () => {
 });
 
 describe('Client.connect()', () => {
-	test('waitUntil', async () => {
+	test('connect', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
-		const res = await connectClient(`ws://127.0.0.1:${port}`, async (client) => {
-			server.onReply('say', async (data) => {
-				expect(data).toBe('hello');
-				return 'world';
-			});
+		const url = `ws://127.0.0.1:${port}`;
+		const handleSay = jest.fn(async () => 'world');
+		const res = await connectClient(url, async (client) => {
+			server.onReply('say', handleSay);
 			return client.request('say', 'hello');
 		});
 		expect(res).toBe('world');
+		expect(handleSay).toHaveBeenCalledWith('hello');
 	});
 
-	test('should throw error if waitUntil error', async () => {
+	test('should throw error if error occurs', async () => {
 		const port = 3000;
 		await createServer({ port });
 		await expect(connectClient(`ws://127.0.0.1:${port}`, async () => {
@@ -63,6 +72,35 @@ describe('Client.connect()', () => {
 			await server.close();
 			await delay(100);
 		})).rejects.toBeDefined();
+	});
+});
+
+describe('Client.autoReconnect()', () => {
+	test('should connect if success to connect', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const url = `ws://127.0.0.1:${port}`;
+		const handleSay = jest.fn(async () => 'world');
+		const res = await autoReconnectClient(url, async (client) => {
+			server.onReply('say', handleSay);
+			return client.request('say', 'hello');
+		});
+		expect(res).toBe('world');
+		expect(handleSay).toHaveBeenCalledWith('hello');
+	});
+
+	test('should reconnect if failed to connect', async () => {
+		const port = 3000;
+		let server;
+		const url = `ws://127.0.0.1:${port}`;
+		const handleSay = jest.fn(async () => 'world');
+		setTimeout(async () => (server = await createServer({ port })), 15);
+		const res = await autoReconnectClient(url, async (client) => {
+			server.onReply('say', handleSay);
+			return client.request('say', 'hello');
+		}, 10);
+		expect(res).toBe('world');
+		expect(handleSay).toHaveBeenCalledWith('hello');
 	});
 });
 
@@ -194,6 +232,28 @@ describe('client', () => {
 		await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		expect(client.ws()).toBeInstanceOf(WebSocket);
+	});
+});
+
+describe('Server.create()', () => {
+	let netServer;
+
+	afterEach((done) => {
+		if (netServer) { netServer.close(done); }
+		else { done(); }
+	});
+
+	test('create', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		await expect(server).toBeInstanceOf(Server);
+	});
+
+	test('should throw error if error occurs', async () => {
+		const port = 3000;
+		netServer = new net.Server();
+		await pify(::netServer.listen)(port);
+		await expect(createServer({ port })).rejects.toBeDefined();
 	});
 });
 
