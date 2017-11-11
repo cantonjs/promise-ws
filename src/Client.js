@@ -2,13 +2,12 @@
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import delay from 'delay';
-import { isFunction, isString } from './utils';
+import { isFunction } from './utils';
 
 export default class Client {
-	static create(options = {}) {
+	static create(url, options = {}) {
 		return new Promise((resolve, reject) => {
-			if (isString(options)) { options = { url: options }; }
-			const ws = new WebSocket(options.url);
+			const ws = new WebSocket(url);
 			const connection = new Client(ws, {
 				...options,
 				onOpen() { resolve(connection); },
@@ -20,7 +19,7 @@ export default class Client {
 	static connect(url, waitUntil) {
 		return new Promise(async (resolve, reject) => {
 			try {
-				const client = await Client.create({ url, onClose: reject });
+				const client = await Client.create(url, { onClose: reject });
 				const res = await waitUntil(client);
 				resolve(res);
 			}
