@@ -1,6 +1,7 @@
 
 import WebSocket from 'ws';
 import EventEmitter from 'events';
+import delay from 'delay';
 import { isFunction, isString } from './utils';
 
 export default class Client {
@@ -27,6 +28,16 @@ export default class Client {
 				reject(err);
 			}
 		});
+	}
+
+	static async autoReconnect(url, waitUntil, reconnectDelay = 1000) {
+		try {
+			return await Client.connect(url, waitUntil);
+		}
+		catch (err) {
+			await delay(reconnectDelay);
+			return Client.autoReconnect(url, waitUntil);
+		}
 	}
 
 	constructor(ws, options = {}) {
