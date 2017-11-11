@@ -66,7 +66,7 @@ describe('Client.connect()', () => {
 	});
 });
 
-describe('client methods', () => {
+describe('client', () => {
 	test('client.request()', async () => {
 		const port = 3000;
 		await createServer({ port });
@@ -79,7 +79,7 @@ describe('client methods', () => {
 		const server = await createServer({ port });
 		server.onReply('say', async (data) => {
 			expect(data).toBe('hello');
-			delay(10);
+			await delay(10);
 			return 'world';
 		});
 		const client = await createClient(`ws://127.0.0.1:${port}`);
@@ -104,11 +104,11 @@ describe('client methods', () => {
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		const handleSay = jest.fn(async (data) => {
 			expect(data).toBe('hello');
-			delay(10);
+			await delay(10);
 		});
 		client.onReply('say', handleSay);
 		await server.request('say', 'hello');
-		expect(handleSay.mock.calls.length).toBe(1);
+		expect(handleSay).toHaveBeenCalledTimes(1);
 	});
 
 	test('client.reply()', async () => {
@@ -117,11 +117,11 @@ describe('client methods', () => {
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		const handleSay = jest.fn(async (data) => {
 			expect(data).toBe('hello');
-			delay(10);
+			await delay(10);
 		});
 		client.reply('say', handleSay);
 		await server.request('say', 'hello');
-		expect(handleSay.mock.calls.length).toBe(1);
+		expect(handleSay).toHaveBeenCalledTimes(1);
 	});
 
 	test('client.addReply()', async () => {
@@ -130,11 +130,11 @@ describe('client methods', () => {
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		const handleSay = jest.fn(async (data) => {
 			expect(data).toBe('hello');
-			delay(10);
+			await delay(10);
 		});
 		client.addReply('say', handleSay);
 		await server.request('say', 'hello');
-		expect(handleSay.mock.calls.length).toBe(1);
+		expect(handleSay).toHaveBeenCalledTimes(1);
 	});
 
 	test('client.removeReply()', async () => {
@@ -145,7 +145,30 @@ describe('client methods', () => {
 		client.addReply('say', handleSay);
 		client.removeReply('say', handleSay);
 		await server.request('say', 'hello');
-		expect(handleSay.mock.calls.length).toBe(0);
+		expect(handleSay).toHaveBeenCalledTimes(0);
+	});
+
+	test('client.replyOnce()', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		const handleSay = jest.fn();
+		client.replyOnce('say', handleSay);
+		await server.request('say', 'yes');
+		await server.request('say', 'no');
+		expect(handleSay).toHaveBeenCalledWith('yes');
+		expect(handleSay).toHaveBeenCalledTimes(1);
+	});
+
+	test('client.replyOnce() and client.removeReply()', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		const handleSay = jest.fn();
+		client.replyOnce('say', handleSay);
+		client.removeReply('say', handleSay);
+		await server.request('say', 'no');
+		expect(handleSay).toHaveBeenCalledTimes(0);
 	});
 
 	test('client.replyCount()', async () => {
@@ -174,25 +197,21 @@ describe('client methods', () => {
 	});
 });
 
-describe('server methods', () => {
+describe('server', () => {
 	test('server.request()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client1 = await createClient(`ws://127.0.0.1:${port}`);
 		const client2 = await createClient(`ws://127.0.0.1:${port}`);
-		const handleClientSay1 = jest.fn(async (data) => {
-			expect(data).toBe('hello');
-			return 1;
-		});
-		const handleClientSay2 = jest.fn(async (data) => {
-			expect(data).toBe('hello');
-			return 2;
-		});
+		const handleClientSay1 = jest.fn(async () => 1);
+		const handleClientSay2 = jest.fn(async () => 2);
 		client1.onReply('say', handleClientSay1);
 		client2.onReply('say', handleClientSay2);
 		const res = await server.request('say', 'hello');
-		expect(handleClientSay1.mock.calls.length).toBe(1);
-		expect(handleClientSay2.mock.calls.length).toBe(1);
+		expect(handleClientSay1).toHaveBeenCalledTimes(1);
+		expect(handleClientSay1).toHaveBeenCalledWith('hello');
+		expect(handleClientSay2).toHaveBeenCalledTimes(1);
+		expect(handleClientSay2).toHaveBeenCalledWith('hello');
 		expect(res).toEqual(expect.arrayContaining([1, 2]));
 	});
 
@@ -211,39 +230,33 @@ describe('server methods', () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
-		const handleSay = jest.fn(async (data) => {
-			expect(data).toBe('hello');
-			delay(10);
-		});
+		const handleSay = jest.fn(async () => { await delay(10); });
 		server.onReply('say', handleSay);
 		await client.request('say', 'hello');
-		expect(handleSay.mock.calls.length).toBe(1);
+		expect(handleSay).toHaveBeenCalledTimes(1);
+		expect(handleSay).toHaveBeenCalledWith('hello');
 	});
 
 	test('server.reply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
-		const handleSay = jest.fn(async (data) => {
-			expect(data).toBe('hello');
-			delay(10);
-		});
+		const handleSay = jest.fn(async () => { await delay(10); });
 		server.reply('say', handleSay);
 		await client.request('say', 'hello');
-		expect(handleSay.mock.calls.length).toBe(1);
+		expect(handleSay).toHaveBeenCalledTimes(1);
+		expect(handleSay).toHaveBeenCalledWith('hello');
 	});
 
 	test('server.addReply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
-		const handleSay = jest.fn(async (data) => {
-			expect(data).toBe('hello');
-			delay(10);
-		});
+		const handleSay = jest.fn(async () => { await delay(10); });
 		server.addReply('say', handleSay);
 		await client.request('say', 'hello');
-		expect(handleSay.mock.calls.length).toBe(1);
+		expect(handleSay).toHaveBeenCalledTimes(1);
+		expect(handleSay).toHaveBeenCalledWith('hello');
 	});
 
 	test('server.removeReply()', async () => {
@@ -254,7 +267,7 @@ describe('server methods', () => {
 		server.addReply('say', handleSay);
 		server.removeReply('say', handleSay);
 		await client.request('say', 'hello');
-		expect(handleSay.mock.calls.length).toBe(0);
+		expect(handleSay).toHaveBeenCalledTimes(0);
 	});
 
 	test('server.replyCount()', async () => {
@@ -278,5 +291,14 @@ describe('server methods', () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		expect(server.wss()).toBeInstanceOf(WebSocket.Server);
+	});
+
+	test('server.clients', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		await createClient(`ws://127.0.0.1:${port}`);
+		await createClient(`ws://127.0.0.1:${port}`);
+		expect(server.clients.size).toBe(2);
+		server.clients.forEach((client) => expect(client).toBeInstanceOf(Client));
 	});
 });

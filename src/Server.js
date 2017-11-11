@@ -19,11 +19,11 @@ export default class Server {
 			clientTracking: true,
 		});
 
+		this.clients = new Map();
 		this._wss = wss;
-		this._clients = new Map();
-		this._listeners = new Map();
 		this._types = new Map();
 
+		/* istanbul ignore next */
 		function heartbeat() {
 			this.isAlive = true;
 		}
@@ -33,11 +33,11 @@ export default class Server {
 			ws.on('pong', heartbeat);
 
 			ws.on('close', () => {
-				this._clients.delete(ws);
+				this.clients.delete(ws);
 			});
 
 			const client = new Client(ws);
-			this._clients.set(ws, client);
+			this.clients.set(ws, client);
 
 			this._types.forEach((listeners, type) => {
 				listeners.forEach((listener) => {
@@ -46,6 +46,7 @@ export default class Server {
 			});
 		});
 
+		/* istanbul ignore next */
 		this._heartbeatInterval = setInterval(() => {
 			wss.clients.forEach((ws) => {
 				if (!ws.isAlive) { return ws.terminate(); }
@@ -100,18 +101,10 @@ export default class Server {
 	_forEach(iterator) {
 		this._wss.clients.forEach((ws) => {
 			if (ws.readyState === WebSocket.OPEN) {
-				const client = this._clients.get(ws);
+				const client = this.clients.get(ws);
 				if (client) { iterator(client); }
 			}
 		});
-	}
-
-	request(...args) {
-		const promises = [];
-		this._forEach((client) => {
-			promises.push(client.request(...args));
-		});
-		return Promise.all(promises);
 	}
 
 	removeReply(type, listener) {
@@ -125,6 +118,14 @@ export default class Server {
 			client.removeReply(type, listener);
 		});
 		return this;
+	}
+
+	request(...args) {
+		const promises = [];
+		this._forEach((client) => {
+			promises.push(client.request(...args));
+		});
+		return Promise.all(promises);
 	}
 
 	wss() {

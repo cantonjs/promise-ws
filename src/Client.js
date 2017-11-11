@@ -38,7 +38,7 @@ export default class Client {
 
 		this._inputCallbacks = new Map();
 		this._outputCallbacks = new Map();
-		this._listenersMap = new WeakMap();
+		this._listeners = new WeakMap();
 		this._lastId = 0;
 		this._replyEmitter = new EventEmitter();
 		this._ws = ws;
@@ -67,6 +67,8 @@ export default class Client {
 				}
 			}
 			catch (err) {
+				/* istanbul ignore next */
+
 				// this._replyEmitter.emit('message', message);
 
 				// TODO
@@ -86,16 +88,14 @@ export default class Client {
 
 	onReply(type, listener) {
 		const finalListener = async (_id, ...args) => {
-			if (listener) {
-				const responseData = await listener(...args);
+			const responseData = await listener(...args);
 
-				if (this._inputCallbacks.has(_id)) {
-					const handler = this._inputCallbacks.get(_id);
-					handler(responseData);
-				}
+			if (this._inputCallbacks.has(_id)) {
+				const handler = this._inputCallbacks.get(_id);
+				handler(responseData);
 			}
 		};
-		this._listenersMap.set(listener, finalListener);
+		this._listeners.set(listener, finalListener);
 		this._replyEmitter.on(type, finalListener);
 		return this;
 	}
@@ -106,6 +106,21 @@ export default class Client {
 
 	addReply(...args) {
 		return this.onReply(...args);
+	}
+
+	replyOnce(type, listener) {
+		const finalListener = async (...args) => {
+			this.removeReply(type, listener);
+			return listener(...args);
+		};
+		this.onReply(type, finalListener);
+
+		// to make listener removable
+		const onReply = this._listeners.get(finalListener);
+		const delted = this._listeners.delete(finalListener);
+		if (delted) { this._listeners.set(listener, onReply); }
+
+		return this;
 	}
 
 	replyCount(type) {
@@ -122,9 +137,9 @@ export default class Client {
 	}
 
 	removeReply(type, listener) {
-		const finalListener = this._listenersMap.get(listener);
+		const finalListener = this._listeners.get(listener);
 		if (finalListener) {
-			this._listenersMap.delete(listener);
+			this._listeners.delete(listener);
 			this._replyEmitter.removeListener(type, finalListener);
 		}
 		return this;
@@ -143,6 +158,8 @@ export default class Client {
 				this._ws.send(JSON.stringify({ _id, type, args }));
 			}
 			catch (err) {
+
+				/* istanbul ignore next */
 				reject(err);
 			}
 		});
