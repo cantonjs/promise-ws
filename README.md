@@ -229,7 +229,7 @@ import { Client } from 'promise-ws';
       /* do something... */
       return 'chris';
     });
-    console.log('res:', res); /* res: chris' */
+    console.log('res:', res); /* res: chris */
   }
   catch (err) {
     if (err.message === 'CLOSE') { console.error('server closed'); }
@@ -265,7 +265,7 @@ import { Client } from 'promise-ws';
       /* do something... */
       return 'chris';
     });
-    console.log('res:', res); /* res: chris' */
+    console.log('res:', res); /* res: chris */
   }
   catch (err) {
     console.error(err);
