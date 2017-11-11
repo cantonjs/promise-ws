@@ -39,7 +39,7 @@ export default class Server {
 			this._clients.set(ws, client);
 
 			this._listeners.forEach((type, listener) => {
-				client.on(type, listener);
+				client.addReply(type, listener);
 			});
 		});
 
@@ -58,16 +58,20 @@ export default class Server {
 		wss.on('error', callback);
 	}
 
-	on(type, listener) {
+	onReply(type, listener) {
 		this._listeners.set(listener, type);
 		this._forEach((client) => {
-			client.on(type, listener);
+			client.onReply(type, listener);
 		});
 		return this;
 	}
 
-	addListener(...args) {
-		return this.on(...args);
+	reply(...args) {
+		return this.onReply(...args);
+	}
+
+	addReply(type, listener) {
+		return this.onReply(type, listener);
 	}
 
 	waitFor(type) {
@@ -75,7 +79,7 @@ export default class Server {
 			const listener = (...args) => {
 				resolve(args);
 			};
-			this.on(type, listener);
+			this.onReply(type, listener);
 		});
 	}
 
@@ -88,18 +92,18 @@ export default class Server {
 		});
 	}
 
-	emit(...args) {
+	request(...args) {
 		const promises = [];
 		this._forEach((client) => {
-			promises.push(client.emit(...args));
+			promises.push(client.request(...args));
 		});
 		return Promise.all(promises);
 	}
 
-	removeListener(type, listener) {
+	removeReply(type, listener) {
 		this._listeners.delete(listener);
 		this._forEach((client) => {
-			client.removeListener(type, listener);
+			client.removeReply(type, listener);
 		});
 		return this;
 	}

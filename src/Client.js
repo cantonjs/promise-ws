@@ -85,7 +85,7 @@ export default class Client {
 	}
 
 
-	on(type, listener) {
+	onReply(type, listener) {
 		const finalListener = async (_id, ...args) => {
 			if (listener) {
 				const responseData = await listener(...args);
@@ -101,8 +101,12 @@ export default class Client {
 		return this;
 	}
 
-	addListener(...args) {
-		return this.on(...args);
+	reply(...args) {
+		return this.onReply(...args);
+	}
+
+	addReply(...args) {
+		return this.onReply(...args);
 	}
 
 	waitFor(type) {
@@ -110,11 +114,11 @@ export default class Client {
 			const listener = (...args) => {
 				resolve(args);
 			};
-			this.on(type, listener);
+			this.onReply(type, listener);
 		});
 	}
 
-	removeListener(type, listener) {
+	removeReply(type, listener) {
 		const finalListener = this._listeners.get(listener);
 		if (finalListener) {
 			this._listeners.delete(listener);
@@ -123,7 +127,7 @@ export default class Client {
 		return this;
 	}
 
-	emit(type, ...args) {
+	request(type, ...args) {
 		return new Promise((resolve, reject) => {
 			try {
 				const _id = ++this._lastId;

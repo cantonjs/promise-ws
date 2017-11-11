@@ -35,11 +35,11 @@ describe('Client.connect()', () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const res = await connectClient(`ws://127.0.0.1:${port}`, async (client) => {
-			server.on('say', async (data) => {
+			server.onReply('say', async (data) => {
 				expect(data).toBe('hello');
 				return 'world';
 			});
-			return client.emit('say', 'hello');
+			return client.request('say', 'hello');
 		});
 		expect(res).toBe('world');
 	});
@@ -49,11 +49,11 @@ describe('Client.connect()', () => {
 		await createServer({ port });
 		await expect(connectClient(`ws://127.0.0.1:${port}`, async () => {
 			throw new Error('err');
-		})).rejects.toEqual(expect.anything());
+		})).rejects.toBeDefined();
 	});
 
 	test('should throw error if failed to connect to server', async () => {
-		await expect(connectClient('ws://127.0.0.1')).rejects.toEqual(expect.anything());
+		await expect(connectClient('ws://127.0.0.1')).rejects.toBeDefined();
 	});
 
 	test('should throw error if server closed', async () => {
@@ -62,28 +62,28 @@ describe('Client.connect()', () => {
 		await expect(connectClient(`ws://127.0.0.1:${port}`, async () => {
 			await server.close();
 			await delay(100);
-		})).rejects.toEqual(expect.anything());
+		})).rejects.toBeDefined();
 	});
 });
 
 describe('client methods', () => {
-	test('client.emit()', async () => {
+	test('client.request()', async () => {
 		const port = 3000;
 		await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
-		await client.emit('hello');
+		await client.request('hello');
 	});
 
-	test('client.emit() and wait for response', async () => {
+	test('client.request() and wait for response', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
-		server.on('say', async (data) => {
+		server.onReply('say', async (data) => {
 			expect(data).toBe('hello');
 			delay(10);
 			return 'world';
 		});
 		const client = await createClient(`ws://127.0.0.1:${port}`);
-		const res = await client.emit('say', 'hello');
+		const res = await client.request('say', 'hello');
 		expect(res).toBe('world');
 	});
 
@@ -92,13 +92,13 @@ describe('client methods', () => {
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		setTimeout(() => {
-			server.emit('hello', 'world');
+			server.request('hello', 'world');
 		}, 10);
 		const [res] = await client.waitFor('hello');
 		expect(res).toBe('world');
 	});
 
-	test('client.on()', async () => {
+	test('client.onReply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
@@ -106,12 +106,12 @@ describe('client methods', () => {
 			expect(data).toBe('hello');
 			delay(10);
 		});
-		client.on('say', handleSay);
-		await server.emit('say', 'hello');
+		client.onReply('say', handleSay);
+		await server.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(1);
 	});
 
-	test('client.addListener()', async () => {
+	test('client.reply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
@@ -119,19 +119,31 @@ describe('client methods', () => {
 			expect(data).toBe('hello');
 			delay(10);
 		});
-		client.addListener('say', handleSay);
-		await server.emit('say', 'hello');
+		client.reply('say', handleSay);
+		await server.request('say', 'hello');
+		expect(handleSay.mock.calls.length).toBe(1);
+	});
+	test('client.addReply()', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		const handleSay = jest.fn(async (data) => {
+			expect(data).toBe('hello');
+			delay(10);
+		});
+		client.addReply('say', handleSay);
+		await server.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(1);
 	});
 
-	test('client.removeListener()', async () => {
+	test('client.removeReply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		const handleSay = jest.fn();
-		client.addListener('say', handleSay);
-		client.removeListener('say', handleSay);
-		await server.emit('say', 'hello');
+		client.addReply('say', handleSay);
+		client.removeReply('say', handleSay);
+		await server.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(0);
 	});
 
@@ -144,7 +156,7 @@ describe('client methods', () => {
 });
 
 describe('server methods', () => {
-	test('server.emit()', async () => {
+	test('server.request()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client1 = await createClient(`ws://127.0.0.1:${port}`);
@@ -157,9 +169,9 @@ describe('server methods', () => {
 			expect(data).toBe('hello');
 			return 2;
 		});
-		client1.on('say', handleClientSay1);
-		client2.on('say', handleClientSay2);
-		const res = await server.emit('say', 'hello');
+		client1.onReply('say', handleClientSay1);
+		client2.onReply('say', handleClientSay2);
+		const res = await server.request('say', 'hello');
 		expect(handleClientSay1.mock.calls.length).toBe(1);
 		expect(handleClientSay2.mock.calls.length).toBe(1);
 		expect(res).toEqual(expect.arrayContaining([1, 2]));
@@ -170,13 +182,13 @@ describe('server methods', () => {
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		setTimeout(() => {
-			client.emit('hello', 'world');
+			client.request('hello', 'world');
 		}, 10);
 		const [res] = await server.waitFor('hello');
 		expect(res).toBe('world');
 	});
 
-	test('server.on()', async () => {
+	test('server.onReply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
@@ -184,12 +196,12 @@ describe('server methods', () => {
 			expect(data).toBe('hello');
 			delay(10);
 		});
-		server.on('say', handleSay);
-		await client.emit('say', 'hello');
+		server.onReply('say', handleSay);
+		await client.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(1);
 	});
 
-	test('server.addListener()', async () => {
+	test('server.reply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
@@ -197,19 +209,32 @@ describe('server methods', () => {
 			expect(data).toBe('hello');
 			delay(10);
 		});
-		server.addListener('say', handleSay);
-		await client.emit('say', 'hello');
+		server.reply('say', handleSay);
+		await client.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(1);
 	});
 
-	test('server.removeListener()', async () => {
+	test('server.addReply()', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		const handleSay = jest.fn(async (data) => {
+			expect(data).toBe('hello');
+			delay(10);
+		});
+		server.addReply('say', handleSay);
+		await client.request('say', 'hello');
+		expect(handleSay.mock.calls.length).toBe(1);
+	});
+
+	test('server.removeReply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		const handleSay = jest.fn();
-		server.addListener('say', handleSay);
-		server.removeListener('say', handleSay);
-		await client.emit('say', 'hello');
+		server.addReply('say', handleSay);
+		server.removeReply('say', handleSay);
+		await client.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(0);
 	});
 
