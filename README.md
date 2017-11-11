@@ -49,13 +49,16 @@ import { Server, Client } from 'promise-ws';
 (async function main() {
   const port = 3000;
   const server = await Server.create({ port });
-  const client = await Client.create(`ws://127.0.0.1:${port}`);
   server.reply('say', async (data) => {
     console.log('data'); /* 'hello' */
     return 'world';
   });
-  const response = await client.request('say', 'hello');
-  console.log(response); /* 'world' */
+
+  const url = `ws://127.0.0.1:${port}`;
+  await Client.autoReconnect(url, async (client) => {
+    const response = await client.request('say', 'hello');
+    console.log(response); /* 'world' */
+  });
 }());
 ```
 
@@ -224,9 +227,9 @@ import { Client } from 'promise-ws';
     const url = 'ws://127.0.0.1:3000';
     const res = await Client.connect(url, async (client) => {
       /* do something... */
-      return 'response data';
+      return 'chris';
     });
-    console.log('res', res); /* will be 'response data' */
+    console.log('res:', res); /* res: chris' */
   }
   catch (err) {
     if (err.message === 'CLOSE') { console.error('server closed'); }
@@ -260,9 +263,9 @@ import { Client } from 'promise-ws';
     const url = 'ws://127.0.0.1:3000';
     const res = await Client.autoReconnect(url, async (client) => {
       /* do something... */
-      return 'response data';
+      return 'chris';
     });
-    console.log('res', res); /* will be 'response data' */
+    console.log('res:', res); /* res: chris' */
   }
   catch (err) {
     console.error(err);
