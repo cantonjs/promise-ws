@@ -5,9 +5,9 @@ import delay from 'delay';
 import { isFunction } from './utils';
 
 export default class Client {
-	static create(url, options = {}) {
+	static create(address, options = {}) {
 		return new Promise((resolve, reject) => {
-			const ws = new WebSocket(url);
+			const ws = new WebSocket(address);
 			const connection = new Client(ws, {
 				...options,
 				onOpen() { resolve(connection); },
@@ -16,10 +16,10 @@ export default class Client {
 		});
 	}
 
-	static connect(url, waitUntil) {
+	static connect(address, waitUntil) {
 		return new Promise(async (resolve, reject) => {
 			try {
-				const client = await Client.create(url, { onClose: reject });
+				const client = await Client.create(address, { onClose: reject });
 				const res = await waitUntil(client);
 				resolve(res);
 			}
@@ -29,13 +29,13 @@ export default class Client {
 		});
 	}
 
-	static async autoReconnect(url, waitUntil, reconnectDelay = 1000) {
+	static async autoReconnect(address, waitUntil, reconnectDelay = 1000) {
 		try {
-			return await Client.connect(url, waitUntil);
+			return await Client.connect(address, waitUntil);
 		}
 		catch (err) {
 			await delay(reconnectDelay);
-			return Client.autoReconnect(url, waitUntil);
+			return Client.autoReconnect(address, waitUntil);
 		}
 	}
 
