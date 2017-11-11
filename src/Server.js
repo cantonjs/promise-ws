@@ -21,7 +21,7 @@ export default class Server {
 
 		this.clients = new Map();
 		this._wss = wss;
-		this._types = new Map();
+		this._names = new Map();
 
 		/* istanbul ignore next */
 		function heartbeat() {
@@ -39,9 +39,9 @@ export default class Server {
 			const client = new Client(ws);
 			this.clients.set(ws, client);
 
-			this._types.forEach((listeners, type) => {
+			this._names.forEach((listeners, name) => {
 				listeners.forEach((listener) => {
-					client.addReply(type, listener);
+					client.addReply(name, listener);
 				});
 			});
 		});
@@ -60,18 +60,18 @@ export default class Server {
 		wss.on('error', callback);
 	}
 
-	onReply(type, listener) {
-		const listeners = (function (types) {
-			if (types.has(type)) { return types.get(type); }
+	onReply(name, listener) {
+		const listeners = (function (names) {
+			if (names.has(name)) { return names.get(name); }
 			const newListeners = new Set();
-			types.set(type, newListeners);
+			names.set(name, newListeners);
 			return newListeners;
-		}(this._types));
+		}(this._names));
 
 		listeners.add(listener);
 
 		this._forEach((client) => {
-			client.onReply(type, listener);
+			client.onReply(name, listener);
 		});
 		return this;
 	}
@@ -80,13 +80,13 @@ export default class Server {
 		return this.onReply(...args);
 	}
 
-	addReply(type, listener) {
-		return this.onReply(type, listener);
+	addReply(name, listener) {
+		return this.onReply(name, listener);
 	}
 
-	replyCount(type) {
-		const types = this._types;
-		return types.has(type) ? types.get(type).size : 0;
+	replyCount(name) {
+		const names = this._names;
+		return names.has(name) ? names.get(name).size : 0;
 	}
 
 	_forEach(iterator) {
@@ -98,15 +98,15 @@ export default class Server {
 		});
 	}
 
-	removeReply(type, listener) {
-		if (this._types.has(type)) {
-			const listeners = this._types.get(type);
+	removeReply(name, listener) {
+		if (this._names.has(name)) {
+			const listeners = this._names.get(name);
 			listeners.delete(listener);
-			if (!listeners.size) { this._types.delete(type); }
+			if (!listeners.size) { this._names.delete(name); }
 		}
 
 		this._forEach((client) => {
-			client.removeReply(type, listener);
+			client.removeReply(name, listener);
 		});
 		return this;
 	}

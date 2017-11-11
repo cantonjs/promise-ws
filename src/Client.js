@@ -56,11 +56,11 @@ export default class Client {
 
 		ws.on('message', (message) => {
 			try {
-				const { _id, type, args, responseData } = JSON.parse(message);
+				const { _id, name, args, responseData } = JSON.parse(message);
 				if (!_id) { throw new Error(); }
 
-				if (type) {
-					const hasListener = this._replyEmitter.listenerCount(type) > 0;
+				if (name) {
+					const hasListener = this._replyEmitter.listenerCount(name) > 0;
 					if (hasListener) {
 						this._inputCallbacks.set(_id, (responseData) => {
 							this._inputCallbacks.delete(_id);
@@ -70,7 +70,7 @@ export default class Client {
 					else {
 						ws.send(JSON.stringify({ _id }));
 					}
-					this._replyEmitter.emit(type, _id, ...args);
+					this._replyEmitter.emit(name, _id, ...args);
 				}
 				else if (this._outputCallbacks.has(_id)) {
 					const response = this._outputCallbacks.get(_id);
@@ -97,7 +97,7 @@ export default class Client {
 		if (isFunction(onError)) { ws.on('error', onError); }
 	}
 
-	onReply(type, listener) {
+	onReply(name, listener) {
 		const finalListener = async (_id, ...args) => {
 			const responseData = await listener(...args);
 
@@ -107,7 +107,7 @@ export default class Client {
 			}
 		};
 		this._listeners.set(listener, finalListener);
-		this._replyEmitter.on(type, finalListener);
+		this._replyEmitter.on(name, finalListener);
 		return this;
 	}
 
@@ -119,12 +119,12 @@ export default class Client {
 		return this.onReply(...args);
 	}
 
-	replyOnce(type, listener) {
+	replyOnce(name, listener) {
 		const finalListener = async (...args) => {
-			this.removeReply(type, listener);
+			this.removeReply(name, listener);
 			return listener(...args);
 		};
-		this.onReply(type, finalListener);
+		this.onReply(name, finalListener);
 
 		// to make listener removable
 		const onReply = this._listeners.get(finalListener);
@@ -134,29 +134,29 @@ export default class Client {
 		return this;
 	}
 
-	replyCount(type) {
-		return this._replyEmitter.listenerCount(type);
+	replyCount(name) {
+		return this._replyEmitter.listenerCount(name);
 	}
 
-	waitFor(type) {
+	waitFor(name) {
 		return new Promise((resolve) => {
 			const listener = (...args) => {
 				resolve(args);
 			};
-			this.replyOnce(type, listener);
+			this.replyOnce(name, listener);
 		});
 	}
 
-	removeReply(type, listener) {
+	removeReply(name, listener) {
 		const finalListener = this._listeners.get(listener);
 		if (finalListener) {
 			this._listeners.delete(listener);
-			this._replyEmitter.removeListener(type, finalListener);
+			this._replyEmitter.removeListener(name, finalListener);
 		}
 		return this;
 	}
 
-	request(type, ...args) {
+	request(name, ...args) {
 		return new Promise((resolve, reject) => {
 			try {
 				const _id = ++this._lastId;
@@ -166,7 +166,7 @@ export default class Client {
 					resolve(responseData);
 				});
 
-				this._ws.send(JSON.stringify({ _id, type, args }));
+				this._ws.send(JSON.stringify({ _id, name, args }));
 			}
 			catch (err) {
 
