@@ -22,6 +22,7 @@ export default class Server {
 		this._wss = wss;
 		this._clients = new Map();
 		this._listeners = new Map();
+		this._types = new Map();
 
 		function heartbeat() {
 			this.isAlive = true;
@@ -38,16 +39,16 @@ export default class Server {
 			const client = new Client(ws);
 			this._clients.set(ws, client);
 
-			this._listeners.forEach((type, listener) => {
-				client.addReply(type, listener);
+			this._types.forEach((listeners, type) => {
+				listeners.forEach((listener) => {
+					client.addReply(type, listener);
+				});
 			});
 		});
 
 		this._heartbeatInterval = setInterval(() => {
 			wss.clients.forEach((ws) => {
-				if (ws.isAlive === false) {
-					return ws.terminate();
-				}
+				if (!ws.isAlive) { return ws.terminate(); }
 
 				ws.isAlive = false;
 				ws.ping('', false, true);
@@ -59,7 +60,15 @@ export default class Server {
 	}
 
 	onReply(type, listener) {
-		this._listeners.set(listener, type);
+		const listeners = (function (types) {
+			if (types.has(type)) { return types.get(type); }
+			const newListeners = new Set();
+			types.set(type, newListeners);
+			return newListeners;
+		}(this._types));
+
+		listeners.add(listener);
+
 		this._forEach((client) => {
 			client.onReply(type, listener);
 		});
@@ -72,6 +81,11 @@ export default class Server {
 
 	addReply(type, listener) {
 		return this.onReply(type, listener);
+	}
+
+	replyCount(type) {
+		const types = this._types;
+		return types.has(type) ? types.get(type).size : 0;
 	}
 
 	waitFor(type) {
@@ -101,7 +115,12 @@ export default class Server {
 	}
 
 	removeReply(type, listener) {
-		this._listeners.delete(listener);
+		if (this._types.has(type)) {
+			const listeners = this._types.get(type);
+			listeners.delete(listener);
+			if (!listeners.size) { this._types.delete(type); }
+		}
+
 		this._forEach((client) => {
 			client.removeReply(type, listener);
 		});

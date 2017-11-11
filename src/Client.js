@@ -38,9 +38,9 @@ export default class Client {
 
 		this._inputCallbacks = new Map();
 		this._outputCallbacks = new Map();
-		this._listeners = new WeakMap();
+		this._listenersMap = new WeakMap();
 		this._lastId = 0;
-		this._eventEmitter = new EventEmitter();
+		this._replyEmitter = new EventEmitter();
 		this._ws = ws;
 
 		ws.on('message', (message) => {
@@ -49,7 +49,7 @@ export default class Client {
 				if (!_id) { throw new Error(); }
 
 				if (type) {
-					const hasListener = this._eventEmitter.listenerCount(type) > 0;
+					const hasListener = this._replyEmitter.listenerCount(type) > 0;
 					if (hasListener) {
 						this._inputCallbacks.set(_id, (responseData) => {
 							this._inputCallbacks.delete(_id);
@@ -59,7 +59,7 @@ export default class Client {
 					else {
 						ws.send(JSON.stringify({ _id }));
 					}
-					this._eventEmitter.emit(type, _id, ...args);
+					this._replyEmitter.emit(type, _id, ...args);
 				}
 				else if (this._outputCallbacks.has(_id)) {
 					const response = this._outputCallbacks.get(_id);
@@ -67,7 +67,7 @@ export default class Client {
 				}
 			}
 			catch (err) {
-				// this._eventEmitter.emit('message', message);
+				// this._replyEmitter.emit('message', message);
 
 				// TODO
 				console.error(err);
@@ -84,7 +84,6 @@ export default class Client {
 		if (isFunction(onError)) { ws.on('error', onError); }
 	}
 
-
 	onReply(type, listener) {
 		const finalListener = async (_id, ...args) => {
 			if (listener) {
@@ -96,8 +95,8 @@ export default class Client {
 				}
 			}
 		};
-		this._listeners.set(listener, finalListener);
-		this._eventEmitter.on(type, finalListener);
+		this._listenersMap.set(listener, finalListener);
+		this._replyEmitter.on(type, finalListener);
 		return this;
 	}
 
@@ -107,6 +106,10 @@ export default class Client {
 
 	addReply(...args) {
 		return this.onReply(...args);
+	}
+
+	replyCount(type) {
+		return this._replyEmitter.listenerCount(type);
 	}
 
 	waitFor(type) {
@@ -119,10 +122,10 @@ export default class Client {
 	}
 
 	removeReply(type, listener) {
-		const finalListener = this._listeners.get(listener);
+		const finalListener = this._listenersMap.get(listener);
 		if (finalListener) {
-			this._listeners.delete(listener);
-			this._eventEmitter.removeListener(type, finalListener);
+			this._listenersMap.delete(listener);
+			this._replyEmitter.removeListener(type, finalListener);
 		}
 		return this;
 	}

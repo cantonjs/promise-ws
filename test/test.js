@@ -123,6 +123,7 @@ describe('client methods', () => {
 		await server.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(1);
 	});
+
 	test('client.addReply()', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
@@ -145,6 +146,24 @@ describe('client methods', () => {
 		client.removeReply('say', handleSay);
 		await server.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(0);
+	});
+
+	test('client.replyCount()', async () => {
+		const port = 3000;
+		await createServer({ port });
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		const reply1 = () => {};
+		const reply2 = () => {};
+
+		expect(client.replyCount('say')).toBe(0);
+		client.addReply('say', reply1);
+		expect(client.replyCount('say')).toBe(1);
+		client.addReply('say', reply2);
+		expect(client.replyCount('say')).toBe(2);
+		client.removeReply('say', reply1);
+		expect(client.replyCount('say')).toBe(1);
+		client.removeReply('say', reply2);
+		expect(client.replyCount('say')).toBe(0);
 	});
 
 	test('client.ws()', async () => {
@@ -236,6 +255,23 @@ describe('server methods', () => {
 		server.removeReply('say', handleSay);
 		await client.request('say', 'hello');
 		expect(handleSay.mock.calls.length).toBe(0);
+	});
+
+	test('server.replyCount()', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const reply1 = () => {};
+		const reply2 = () => {};
+
+		expect(server.replyCount('say')).toBe(0);
+		server.addReply('say', reply1);
+		expect(server.replyCount('say')).toBe(1);
+		server.addReply('say', reply2);
+		expect(server.replyCount('say')).toBe(2);
+		server.removeReply('say', reply1);
+		expect(server.replyCount('say')).toBe(1);
+		server.removeReply('say', reply2);
+		expect(server.replyCount('say')).toBe(0);
 	});
 
 	test('server.wss()', async () => {
