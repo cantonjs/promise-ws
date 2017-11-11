@@ -102,6 +102,15 @@ describe('Client.autoReconnect()', () => {
 		expect(res).toBe('world');
 		expect(handleSay).toHaveBeenCalledWith('hello');
 	});
+
+	test('should throw error if error occurs', async () => {
+		const port = 3000;
+		await createServer({ port });
+		const url = `ws://127.0.0.1:${port}`;
+		await expect(
+			autoReconnectClient(url, async () => { throw new Error(); })
+		).rejects.toBeDefined();
+	});
 });
 
 describe('client', () => {

@@ -34,8 +34,13 @@ export default class Client {
 			return await Client.connect(address, waitUntil);
 		}
 		catch (err) {
-			await delay(reconnectDelay);
-			return Client.autoReconnect(address, waitUntil);
+			if (err.message === 'CLOSE') {
+				await delay(reconnectDelay);
+				return Client.autoReconnect(address, waitUntil);
+			}
+			else {
+				throw err;
+			}
 		}
 	}
 
