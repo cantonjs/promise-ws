@@ -89,15 +89,6 @@ export default class Server {
 		return types.has(type) ? types.get(type).size : 0;
 	}
 
-	waitFor(type) {
-		return new Promise((resolve) => {
-			const listener = (...args) => {
-				resolve(args);
-			};
-			this.onReply(type, listener);
-		});
-	}
-
 	_forEach(iterator) {
 		this._wss.clients.forEach((ws) => {
 			if (ws.readyState === WebSocket.OPEN) {

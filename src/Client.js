@@ -143,7 +143,7 @@ export default class Client {
 			const listener = (...args) => {
 				resolve(args);
 			};
-			this.onReply(type, listener);
+			this.replyOnce(type, listener);
 		});
 	}
 
