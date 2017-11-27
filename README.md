@@ -15,6 +15,7 @@ A promise based WebSocket implementation for Node.js. Built on top of [ws](https
 - [Installation](#installation)
 - [API Reference](#api-reference)
   - [Server.create\(options\)](#servercreateoptions)
+  - [Server Events](#server-events)
   - [server#onReply\(name, response\)](#serveronreplyname-response)
   - [server#addReply\(name, response\)](#serveraddreplyname-response)
   - [server#reply\(name, response\)](#serverreplyname-response)
@@ -27,6 +28,7 @@ A promise based WebSocket implementation for Node.js. Built on top of [ws](https
   - [Client.create\(address\[, options\]\)](#clientcreateaddress-options)
   - [Client.connect\(address, waitUntil\)](#clientconnectaddress-waituntil)
   - [Client.autoReconnect\(address, waitUntil\[, delay\]\)](#clientautoreconnectaddress-waituntil-delay)
+  - [Client Events](#client-events)
   - [client#onReply\(name, response\)](#clientonreplyname-response)
   - [client#addReply\(name, response\)](#clientaddreplyname-response)
   - [client#reply\(name, response\)](#clientreplyname-response)
@@ -86,6 +88,16 @@ $ npm install promise-ws
 - `server` \<Promise\<Server\>\>
 
 Create a WebSocket server
+
+
+<a name="server-events"></a>
+### Server Events
+
+Server extends [EventEmitter](https://nodejs.org/api/events.html), which forwards these events from [WebSocket.Server](https://github.com/websockets/ws/blob/master/doc/ws.md#class-websocketserver):
+
+- [connection](https://github.com/websockets/ws/blob/master/doc/ws.md#event-connection)
+- [error](https://github.com/websockets/ws/blob/master/doc/ws.md#event-error)
+- [headers](https://github.com/websockets/ws/blob/master/doc/ws.md#event-headers)
 
 
 <a name="serveronreplyname-response"></a>
@@ -272,6 +284,20 @@ import { Client } from 'promise-ws';
   }
 }());
 ```
+
+<a name="client-events"></a>
+### Client Events
+
+Client extends [EventEmitter](https://nodejs.org/api/events.html), which forwards these events from [WebSocket.Client](https://github.com/websockets/ws/blob/master/doc/ws.md#class-websocket):
+
+- [close](https://github.com/websockets/ws/blob/master/doc/ws.md#event-close)
+- [error](https://github.com/websockets/ws/blob/master/doc/ws.md#event-error-1)
+- [headers](https://github.com/websockets/ws/blob/master/doc/ws.md#event-headers-1)
+- [message](https://github.com/websockets/ws/blob/master/doc/ws.md#event-message)
+- [open](https://github.com/websockets/ws/blob/master/doc/ws.md#event-open)
+- [ping](https://github.com/websockets/ws/blob/master/doc/ws.md#event-ping)
+- [pong](https://github.com/websockets/ws/blob/master/doc/ws.md#event-pong)
+- [unexpected-response](https://github.com/websockets/ws/blob/master/doc/ws.md#event-unexpected-response)
 
 
 <a name="clientonreplyname-response"></a>
