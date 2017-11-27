@@ -2,9 +2,9 @@
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import delay from 'delay';
-import { isFunction } from './utils';
+import { isFunction, noop } from './utils';
 
-export default class Client {
+export default class Client extends EventEmitter {
 	static create(address, options = {}) {
 		return new Promise((resolve, reject) => {
 			const ws = new WebSocket(address);
@@ -45,6 +45,8 @@ export default class Client {
 	}
 
 	constructor(ws, options = {}) {
+		super();
+
 		const {
 			onClose,
 			onOpen,
@@ -99,6 +101,21 @@ export default class Client {
 
 		if (isFunction(onOpen)) { ws.on('open', onOpen); }
 		if (isFunction(onError)) { ws.on('error', onError); }
+
+		const forward = (eventType) => {
+			ws.on(eventType, this.emit.bind(this, eventType));
+		};
+
+		this.on('error', noop);
+
+		forward('open');
+		forward('close');
+		forward('headers');
+		forward('error');
+		forward('message');
+		forward('ping');
+		forward('pong');
+		forward('unexpected-response');
 	}
 
 	onReply(name, listener) {

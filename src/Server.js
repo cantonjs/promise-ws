@@ -1,9 +1,11 @@
 
 import WebSocket from 'ws';
+import EventEmitter from 'events';
 import pify from 'pify';
 import Client from './Client';
+import { noop } from './utils';
 
-export default class Server {
+export default class Server extends EventEmitter {
 	static async create(options) {
 		return new Promise((resolve, reject) => {
 			const connection = new Server(options, (err) => {
@@ -14,6 +16,8 @@ export default class Server {
 	}
 
 	constructor(options, callback) {
+		super();
+
 		const wss = new WebSocket.Server({
 			...options,
 			clientTracking: true,
@@ -58,6 +62,16 @@ export default class Server {
 
 		wss.on('listening', callback);
 		wss.on('error', callback);
+
+		const forward = (eventType) => {
+			wss.on(eventType, this.emit.bind(this, eventType));
+		};
+
+		this.on('error', noop);
+
+		forward('connection');
+		forward('error');
+		forward('headers');
 	}
 
 	onReply(name, listener) {
