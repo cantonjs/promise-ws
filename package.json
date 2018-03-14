@@ -34,7 +34,7 @@
   "dependencies": {
     "delay": "^2.0.0",
     "pify": "^3.0.0",
-    "ws": "^3.2.0"
+    "ws": "^5.0.0"
   },
   "devDependencies": {
     "babel-cli": "^6.11.4",
