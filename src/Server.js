@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 import EventEmitter from 'events';
 import pify from 'pify';
 import Client from './Client';
-import { noop } from './utils';
+import { noop, isObject } from './utils';
 
 export default class Server extends EventEmitter {
 	static async create(options) {
@@ -19,7 +19,7 @@ export default class Server extends EventEmitter {
 	}
 
 	constructor(options, callback) {
-		if (typeof options !== 'object') {
+		if (!isObject(options)) {
 			throw new Error('Missing option argument, expected an object.');
 		}
 
