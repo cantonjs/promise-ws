@@ -60,20 +60,37 @@ export default class Client extends EventEmitter {
 		ws.on('message', async (message) => {
 			try {
 				const { _id, name, args, responseData } = JSON.parse(message);
+
+				/* istanbul ignore if */
 				if (!_id) {
 					throw new Error();
 				}
 
+				/* istanbul ignore else */
 				if (name) {
+					const send = function send(data) {
+						return new Promise((resolve, reject) => {
+							ws.send(JSON.stringify(data), (err) => {
+								/* istanbul ignore if */
+								if (err) {
+									reject(err);
+								}
+								else {
+									resolve();
+								}
+							});
+						});
+					};
+
 					const hasListener = this._replyEmitter.listenerCount(name) > 0;
 					if (hasListener) {
 						this._inputCallbacks.set(_id, async (responseData) => {
 							this._inputCallbacks.delete(_id);
-							await this._wsSend(JSON.stringify({ _id, responseData }));
+							await send({ _id, responseData });
 						});
 					}
 					else {
-						await this._wsSend(JSON.stringify({ _id }));
+						await send({ _id });
 					}
 					this._replyEmitter.emit(name, _id, ...args);
 				}
@@ -121,31 +138,20 @@ export default class Client extends EventEmitter {
 		forward('unexpected-response');
 	}
 
-	_wsSend(data) {
-		return new Promise((resolve, reject) => {
-			this._ws.send(data, (err) => {
-				if (err) {
-					reject(err);
-				}
-				else {
-					resolve();
-				}
-			});
-		});
-	}
-
 	onReply(name, listener, errorHandler) {
 		const finalListener = async (_id, ...args) => {
 			try {
 				const responseData = await listener(...args);
 
+				/* istanbul ignore else */
 				if (this._inputCallbacks.has(_id)) {
 					const handler = this._inputCallbacks.get(_id);
 					await handler(responseData);
 				}
 			}
 			catch (err) {
-				if (typeof errorHandler === 'function') {
+				/* istanbul ignore else */
+				if (isFunction(errorHandler)) {
 					errorHandler(err);
 				}
 			}
@@ -163,17 +169,19 @@ export default class Client extends EventEmitter {
 		return this.onReply(...args);
 	}
 
-	replyOnce(name, listener) {
+	replyOnce(name, listener, errorHandler) {
 		const finalListener = async (...args) => {
 			this.removeReply(name, listener);
 			return listener(...args);
 		};
-		this.onReply(name, finalListener);
+		this.onReply(name, finalListener, errorHandler);
 
 		// to make listener removable
 		const onReply = this._listeners.get(finalListener);
-		const delted = this._listeners.delete(finalListener);
-		if (delted) {
+		const deleted = this._listeners.delete(finalListener);
+
+		/* istanbul ignore else */
+		if (deleted) {
 			this._listeners.set(listener, onReply);
 		}
 
@@ -195,10 +203,13 @@ export default class Client extends EventEmitter {
 
 	removeReply(name, listener) {
 		const finalListener = this._listeners.get(listener);
+
+		/* istanbul ignore else */
 		if (finalListener) {
 			this._listeners.delete(listener);
 			this._replyEmitter.removeListener(name, finalListener);
 		}
+
 		return this;
 	}
 
@@ -206,14 +217,12 @@ export default class Client extends EventEmitter {
 		return new Promise((resolve, reject) => {
 			try {
 				const _id = ++this._lastId;
-
 				this._outputCallbacks.set(_id, (responseData) => {
 					this._outputCallbacks.delete(_id);
 					resolve(responseData);
 				});
-
 				this._ws.send(JSON.stringify({ _id, name, args }), (err) => {
-					/* istanbul ignore else */
+					/* istanbul ignore next */
 					if (err) {
 						reject(err);
 					}

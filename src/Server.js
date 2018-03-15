@@ -1,4 +1,3 @@
-
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import pify from 'pify';
@@ -9,8 +8,12 @@ export default class Server extends EventEmitter {
 	static async create(options) {
 		return new Promise((resolve, reject) => {
 			const connection = new Server(options, (err) => {
-				if (err) { reject(err); }
-				else { resolve(connection); }
+				if (err) {
+					reject(err);
+				}
+				else {
+					resolve(connection);
+				}
 			});
 		});
 	}
@@ -53,7 +56,9 @@ export default class Server extends EventEmitter {
 		/* istanbul ignore next */
 		this._heartbeatInterval = setInterval(() => {
 			wss.clients.forEach((ws) => {
-				if (!ws.isAlive) { return ws.terminate(); }
+				if (!ws.isAlive) {
+					return ws.terminate();
+				}
 
 				ws.isAlive = false;
 				ws.ping('', false, true);
@@ -76,11 +81,13 @@ export default class Server extends EventEmitter {
 
 	onReply(name, listener) {
 		const listeners = (function (names) {
-			if (names.has(name)) { return names.get(name); }
+			if (names.has(name)) {
+				return names.get(name);
+			}
 			const newListeners = new Set();
 			names.set(name, newListeners);
 			return newListeners;
-		}(this._names));
+		})(this._names);
 
 		listeners.add(listener);
 
@@ -94,8 +101,8 @@ export default class Server extends EventEmitter {
 		return this.onReply(...args);
 	}
 
-	addReply(name, listener) {
-		return this.onReply(name, listener);
+	addReply(...args) {
+		return this.onReply(...args);
 	}
 
 	replyCount(name) {
@@ -105,18 +112,26 @@ export default class Server extends EventEmitter {
 
 	_forEach(iterator) {
 		this._wss.clients.forEach((ws) => {
+			/* istanbul ignore else */
 			if (ws.readyState === WebSocket.OPEN) {
 				const client = this.clients.get(ws);
-				if (client) { iterator(client); }
+
+				/* istanbul ignore else */
+				if (client) {
+					iterator(client);
+				}
 			}
 		});
 	}
 
 	removeReply(name, listener) {
+		/* istanbul ignore else */
 		if (this._names.has(name)) {
 			const listeners = this._names.get(name);
 			listeners.delete(listener);
-			if (!listeners.size) { this._names.delete(name); }
+			if (!listeners.size) {
+				this._names.delete(name);
+			}
 		}
 
 		this._forEach((client) => {

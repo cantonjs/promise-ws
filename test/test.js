@@ -1,4 +1,3 @@
-
 import { Server, Client } from '../src';
 import delay from 'delay';
 import net from 'net';
@@ -56,9 +55,11 @@ describe('Client.connect()', () => {
 	test('should throw error if error occurs', async () => {
 		const port = 3000;
 		await createServer({ port });
-		await expect(connectClient(`ws://127.0.0.1:${port}`, async () => {
-			throw new Error('err');
-		})).rejects.toBeDefined();
+		await expect(
+			connectClient(`ws://127.0.0.1:${port}`, async () => {
+				throw new Error('err');
+			}),
+		).rejects.toBeDefined();
 	});
 
 	test('should throw error if failed to connect to server', async () => {
@@ -68,10 +69,12 @@ describe('Client.connect()', () => {
 	test('should throw error if server closed', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
-		await expect(connectClient(`ws://127.0.0.1:${port}`, async () => {
-			await server.close();
-			await delay(100);
-		})).rejects.toBeDefined();
+		await expect(
+			connectClient(`ws://127.0.0.1:${port}`, async () => {
+				await server.close();
+				await delay(100);
+			}),
+		).rejects.toBeDefined();
 	});
 });
 
@@ -95,10 +98,14 @@ describe('Client.autoReconnect()', () => {
 		const url = `ws://127.0.0.1:${port}`;
 		const handleSay = jest.fn(async () => 'world');
 		setTimeout(async () => (server = await createServer({ port })), 15);
-		const res = await autoReconnectClient(url, async (client) => {
-			server.onReply('say', handleSay);
-			return client.request('say', 'hello');
-		}, 10);
+		const res = await autoReconnectClient(
+			url,
+			async (client) => {
+				server.onReply('say', handleSay);
+				return client.request('say', 'hello');
+			},
+			10,
+		);
 		expect(res).toBe('world');
 		expect(handleSay).toHaveBeenCalledWith('hello');
 	});
@@ -108,7 +115,9 @@ describe('Client.autoReconnect()', () => {
 		await createServer({ port });
 		const url = `ws://127.0.0.1:${port}`;
 		await expect(
-			autoReconnectClient(url, async () => { throw new Error(); })
+			autoReconnectClient(url, async () => {
+				throw new Error();
+			}),
 		).rejects.toBeDefined();
 	});
 });
@@ -242,14 +251,30 @@ describe('client', () => {
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		expect(client.ws()).toBeInstanceOf(WebSocket);
 	});
+
+	test('client.onReply() with errorHandler', async (done) => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const errorHandler = jest.fn(done);
+		server.on('connection', (ws) => {
+			const client = server.clients.get(ws);
+			client.onReply('say', async () => server.close(), errorHandler);
+		});
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		client.request('say');
+	});
 });
 
 describe('Server.create()', () => {
 	let netServer;
 
 	afterEach((done) => {
-		if (netServer) { netServer.close(done); }
-		else { done(); }
+		if (netServer) {
+			netServer.close(done);
+		}
+		else {
+			done();
+		}
 	});
 
 	test('create', async () => {
@@ -288,7 +313,9 @@ describe('server', () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
-		const handleSay = jest.fn(async () => { await delay(10); });
+		const handleSay = jest.fn(async () => {
+			await delay(10);
+		});
 		server.onReply('say', handleSay);
 		await client.request('say', 'hello');
 		expect(handleSay).toHaveBeenCalledTimes(1);
@@ -299,7 +326,9 @@ describe('server', () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
-		const handleSay = jest.fn(async () => { await delay(10); });
+		const handleSay = jest.fn(async () => {
+			await delay(10);
+		});
 		server.reply('say', handleSay);
 		await client.request('say', 'hello');
 		expect(handleSay).toHaveBeenCalledTimes(1);
@@ -310,7 +339,9 @@ describe('server', () => {
 		const port = 3000;
 		const server = await createServer({ port });
 		const client = await createClient(`ws://127.0.0.1:${port}`);
-		const handleSay = jest.fn(async () => { await delay(10); });
+		const handleSay = jest.fn(async () => {
+			await delay(10);
+		});
 		server.addReply('say', handleSay);
 		await client.request('say', 'hello');
 		expect(handleSay).toHaveBeenCalledTimes(1);
