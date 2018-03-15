@@ -60,7 +60,7 @@ export default class Client extends EventEmitter {
 		this._replyEmitter = new EventEmitter();
 		this._ws = ws;
 
-		ws.on('message', (message) => {
+		ws.on('message', async (message) => {
 			try {
 				const { _id, name, args, responseData } = JSON.parse(message);
 				if (!_id) { throw new Error(); }
@@ -68,13 +68,13 @@ export default class Client extends EventEmitter {
 				if (name) {
 					const hasListener = this._replyEmitter.listenerCount(name) > 0;
 					if (hasListener) {
-						this._inputCallbacks.set(_id, (responseData) => {
+						this._inputCallbacks.set(_id, async (responseData) => {
 							this._inputCallbacks.delete(_id);
-							ws.send(JSON.stringify({ _id, responseData }));
+							await this._wsSend(JSON.stringify({ _id, responseData }));
 						});
 					}
 					else {
-						ws.send(JSON.stringify({ _id }));
+						await this._wsSend(JSON.stringify({ _id }));
 					}
 					this._replyEmitter.emit(name, _id, ...args);
 				}
@@ -118,13 +118,33 @@ export default class Client extends EventEmitter {
 		forward('unexpected-response');
 	}
 
-	onReply(name, listener) {
-		const finalListener = async (_id, ...args) => {
-			const responseData = await listener(...args);
+	_wsSend(data) {
+		return new Promise((resolve, reject) => {
+			this._ws.send(data, (err) => {
+				if (err) {
+					reject(err);
+				}
+				else {
+					resolve();
+				}
+			})
+		});
+	}
 
-			if (this._inputCallbacks.has(_id)) {
-				const handler = this._inputCallbacks.get(_id);
-				handler(responseData);
+	onReply(name, listener, errorHandler) {
+		const finalListener = async (_id, ...args) => {
+			try {
+				const responseData = await listener(...args);
+
+				if (this._inputCallbacks.has(_id)) {
+					const handler = this._inputCallbacks.get(_id);
+					await handler(responseData);
+				}
+			}
+			catch (err) {
+				if (typeof errorHandler === 'function') {
+					errorHandler(err);
+				}
 			}
 		};
 		this._listeners.set(listener, finalListener);
@@ -187,7 +207,12 @@ export default class Client extends EventEmitter {
 					resolve(responseData);
 				});
 
-				this._ws.send(JSON.stringify({ _id, name, args }));
+				this._ws.send(JSON.stringify({ _id, name, args }), (err) => {
+
+					/* istanbul ignore else */
+					if (err) { reject(err); }
+
+				});
 			}
 			catch (err) {
 
