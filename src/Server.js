@@ -19,8 +19,13 @@ export default class Server extends EventEmitter {
 	}
 
 	constructor(options, callback) {
+		if (typeof options !== 'object') {
+			throw new Error('Missing option argument, expected an object.');
+		}
+
 		super();
 
+		const { server, noServer } = options;
 		const wss = new WebSocket.Server({
 			...options,
 			clientTracking: true,
@@ -65,9 +70,6 @@ export default class Server extends EventEmitter {
 			});
 		}, 30000);
 
-		wss.on('listening', callback);
-		wss.on('error', callback);
-
 		const forward = (eventType) => {
 			wss.on(eventType, this.emit.bind(this, eventType));
 		};
@@ -77,6 +79,14 @@ export default class Server extends EventEmitter {
 		forward('connection');
 		forward('error');
 		forward('headers');
+
+		if (noServer || (server && server.listening)) {
+			process.nextTick(callback);
+		}
+		else {
+			wss.on('listening', callback);
+		}
+		wss.on('error', callback);
 	}
 
 	onReply(name, listener) {

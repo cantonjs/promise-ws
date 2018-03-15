@@ -295,9 +295,25 @@ describe('Server.create()', () => {
 		}
 	});
 
-	test('create', async () => {
+	test('should throw error if missing argument', async () => {
+		await expect(createServer()).rejects.toBeDefined();
+	});
+
+	test('create with `port`', async () => {
 		const port = 3000;
 		const server = await createServer({ port });
+		await expect(server).toBeInstanceOf(Server);
+	});
+
+	test('create with `noServer`', async () => {
+		const server = await createServer({ noServer: true });
+		await expect(server).toBeInstanceOf(Server);
+	});
+
+	test('create with `server`', async () => {
+		netServer = new net.Server();
+		await pify(::netServer.listen)();
+		const server = await createServer({ server: netServer });
 		await expect(server).toBeInstanceOf(Server);
 	});
 
