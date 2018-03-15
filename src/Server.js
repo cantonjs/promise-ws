@@ -134,7 +134,7 @@ export default class Server extends EventEmitter {
 		};
 	}
 
-	each(iterator) {
+	onConnection(iterator) {
 		this._wss.on('connection', this._createClientsIterator(iterator));
 	}
 
