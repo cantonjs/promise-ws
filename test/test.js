@@ -424,4 +424,16 @@ describe('server', () => {
 		expect(server.clients.size).toBe(2);
 		server.clients.forEach((client) => expect(client).toBeInstanceOf(Client));
 	});
+
+	test('server.each()', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const handler = jest.fn((client) => {
+			expect(client).toBeInstanceOf(Client);
+		});
+		server.each(handler);
+		await createClient(`ws://127.0.0.1:${port}`);
+		await createClient(`ws://127.0.0.1:${port}`);
+		expect(handler).toHaveBeenCalledTimes(2);
+	});
 });

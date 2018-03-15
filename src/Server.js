@@ -120,8 +120,8 @@ export default class Server extends EventEmitter {
 		return names.has(name) ? names.get(name).size : 0;
 	}
 
-	_forEach(iterator) {
-		this._wss.clients.forEach((ws) => {
+	_createClientsIterator(iterator) {
+		return (ws) => {
 			/* istanbul ignore else */
 			if (ws.readyState === WebSocket.OPEN) {
 				const client = this.clients.get(ws);
@@ -131,7 +131,15 @@ export default class Server extends EventEmitter {
 					iterator(client);
 				}
 			}
-		});
+		};
+	}
+
+	each(iterator) {
+		this._wss.on('connection', this._createClientsIterator(iterator));
+	}
+
+	_forEach(iterator) {
+		this._wss.clients.forEach(this._createClientsIterator(iterator));
 	}
 
 	removeReply(name, listener) {
