@@ -38,6 +38,24 @@ afterEach(async () => {
 	_clients = [];
 });
 
+describe('Client.create()', () => {
+	test('create with address', async () => {
+		const port = 3000;
+		await createServer({ port });
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		expect(client.ws().readyState).toBe(1);
+	});
+
+	test('create with options object', async () => {
+		const port = 3000;
+		await createServer({ port });
+		const client = await createClient({
+			address: `ws://127.0.0.1:${port}`,
+		});
+		expect(client.ws().readyState).toBe(1);
+	});
+});
+
 describe('Client.connect()', () => {
 	test('connect', async () => {
 		const port = 3000;

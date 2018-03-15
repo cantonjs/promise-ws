@@ -3,12 +3,23 @@ import EventEmitter from 'events';
 import delay from 'delay';
 import { isFunction, noop } from './utils';
 
+const parseOptions = function parseOptions(addressOrOptions) {
+	if (typeof addressOrOptions === 'string') {
+		return { address: addressOrOptions };
+	}
+	else {
+		const { address, protocols, ...options } = addressOrOptions;
+		return { address, protocols, options };
+	}
+};
+
 export default class Client extends EventEmitter {
-	static create(address, options = {}) {
+	static create(addressOrOptions, handlers = {}) {
 		return new Promise((resolve, reject) => {
-			const ws = new WebSocket(address);
+			const { address, protocols, options } = parseOptions(addressOrOptions);
+			const ws = new WebSocket(address, protocols, options);
 			const connection = new Client(ws, {
-				...options,
+				...handlers,
 				onOpen() {
 					resolve(connection);
 				},
@@ -17,10 +28,12 @@ export default class Client extends EventEmitter {
 		});
 	}
 
-	static connect(address, waitUntil) {
+	static connect(addressOrOptions, waitUntil) {
 		return new Promise(async (resolve, reject) => {
 			try {
-				const client = await Client.create(address, { onClose: reject });
+				const client = await Client.create(addressOrOptions, {
+					onClose: reject,
+				});
 				const res = await waitUntil(client);
 				resolve(res);
 			}
@@ -30,14 +43,18 @@ export default class Client extends EventEmitter {
 		});
 	}
 
-	static async autoReconnect(address, waitUntil, reconnectDelay = 1000) {
+	static async autoReconnect(
+		addressOrOptions,
+		waitUntil,
+		reconnectDelay = 1000,
+	) {
 		try {
-			return await Client.connect(address, waitUntil);
+			return await Client.connect(addressOrOptions, waitUntil);
 		}
 		catch (err) {
 			if (err.message === 'CLOSE') {
 				await delay(reconnectDelay);
-				return Client.autoReconnect(address, waitUntil);
+				return Client.autoReconnect(addressOrOptions, waitUntil);
 			}
 			else {
 				throw err;
@@ -45,10 +62,10 @@ export default class Client extends EventEmitter {
 		}
 	}
 
-	constructor(ws, options = {}) {
+	constructor(ws, handlers = {}) {
 		super();
 
-		const { onClose, onOpen, onError } = options;
+		const { onClose, onOpen, onError } = handlers;
 
 		this._inputCallbacks = new Map();
 		this._outputCallbacks = new Map();
