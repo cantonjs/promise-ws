@@ -1,4 +1,3 @@
-
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import delay from 'delay';
@@ -10,7 +9,9 @@ export default class Client extends EventEmitter {
 			const ws = new WebSocket(address);
 			const connection = new Client(ws, {
 				...options,
-				onOpen() { resolve(connection); },
+				onOpen() {
+					resolve(connection);
+				},
 				onError: reject,
 			});
 		});
@@ -47,11 +48,7 @@ export default class Client extends EventEmitter {
 	constructor(ws, options = {}) {
 		super();
 
-		const {
-			onClose,
-			onOpen,
-			onError,
-		} = options;
+		const { onClose, onOpen, onError } = options;
 
 		this._inputCallbacks = new Map();
 		this._outputCallbacks = new Map();
@@ -63,7 +60,9 @@ export default class Client extends EventEmitter {
 		ws.on('message', async (message) => {
 			try {
 				const { _id, name, args, responseData } = JSON.parse(message);
-				if (!_id) { throw new Error(); }
+				if (!_id) {
+					throw new Error();
+				}
 
 				if (name) {
 					const hasListener = this._replyEmitter.listenerCount(name) > 0;
@@ -99,8 +98,12 @@ export default class Client extends EventEmitter {
 			});
 		}
 
-		if (isFunction(onOpen)) { ws.on('open', onOpen); }
-		if (isFunction(onError)) { ws.on('error', onError); }
+		if (isFunction(onOpen)) {
+			ws.on('open', onOpen);
+		}
+		if (isFunction(onError)) {
+			ws.on('error', onError);
+		}
 
 		const forward = (eventType) => {
 			ws.on(eventType, this.emit.bind(this, eventType));
@@ -127,7 +130,7 @@ export default class Client extends EventEmitter {
 				else {
 					resolve();
 				}
-			})
+			});
 		});
 	}
 
@@ -170,7 +173,9 @@ export default class Client extends EventEmitter {
 		// to make listener removable
 		const onReply = this._listeners.get(finalListener);
 		const delted = this._listeners.delete(finalListener);
-		if (delted) { this._listeners.set(listener, onReply); }
+		if (delted) {
+			this._listeners.set(listener, onReply);
+		}
 
 		return this;
 	}
@@ -208,14 +213,13 @@ export default class Client extends EventEmitter {
 				});
 
 				this._ws.send(JSON.stringify({ _id, name, args }), (err) => {
-
 					/* istanbul ignore else */
-					if (err) { reject(err); }
-
+					if (err) {
+						reject(err);
+					}
 				});
 			}
 			catch (err) {
-
 				/* istanbul ignore next */
 				reject(err);
 			}
