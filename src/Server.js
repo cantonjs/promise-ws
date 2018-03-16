@@ -80,7 +80,15 @@ export default class Server extends EventEmitter {
 		forward('error');
 		forward('headers');
 
-		if (noServer || (server && server.listening)) {
+		if (
+			noServer ||
+			/* istanbul ignore next */
+			(server &&
+				(server.listening ||
+
+					/* for node.js < v5.7.0 */
+					(server.listening === undefined && server.address())))
+		) {
 			process.nextTick(callback);
 		}
 		else {
