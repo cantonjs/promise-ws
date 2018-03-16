@@ -1,8 +1,11 @@
 # promise-ws
 
 [![Build Status](https://travis-ci.org/cantonjs/promise-ws.svg?branch=master)](https://travis-ci.org/cantonjs/promise-ws)
+[![CircleCI](https://circleci.com/gh/cantonjs/promise-ws.svg?style=shield)](https://circleci.com/gh/cantonjs/promise-ws)
+[![Build status](https://ci.appveyor.com/api/projects/status/q0rmv88vjfk8m2w5/branch/master?svg=true)](https://ci.appveyor.com/project/cantonjs/promise-ws/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/cantonjs/promise-ws/badge.svg?branch=master)](https://coveralls.io/github/cantonjs/promise-ws?branch=master)
-[![License](https://img.shields.io/badge/license-MIT_License-blue.svg?style=flat)](https://github.com/cantonjs/promise-ws/blob/master/LICENSE.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![License](https://img.shields.io/badge/license-MIT_License-brightgreen.svg?style=flat)](https://github.com/cantonjs/promise-ws/blob/master/LICENSE.md)
 
 A promise based WebSocket implementation for Node.js. Built on top of
 [ws](https://github.com/websockets/ws)
