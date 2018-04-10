@@ -1,7 +1,7 @@
 {
   "name": "promise-ws",
   "description": "A Promise-Based WebSocket implementation for Node.js",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "main": "lib/index",
   "files": [
     "*.md",
