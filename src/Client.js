@@ -238,12 +238,13 @@ export default class Client extends EventEmitter {
 					this._outputCallbacks.delete(_id);
 					resolve(responseData);
 				});
-				this._ws.send(JSON.stringify({ _id, name, args }), (err) => {
-					/* istanbul ignore next */
-					if (err) {
-						reject(err);
-					}
-				});
+				this._ws &&
+					this._ws.send(JSON.stringify({ _id, name, args }), (err) => {
+						/* istanbul ignore next */
+						if (err) {
+							reject(err);
+						}
+					});
 			}
 			catch (err) {
 				/* istanbul ignore next */
@@ -257,7 +258,7 @@ export default class Client extends EventEmitter {
 	}
 
 	close() {
-		this._ws.terminate();
+		this._ws && this._ws.terminate();
 		this._ws = null;
 	}
 }
