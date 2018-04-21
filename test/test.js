@@ -281,6 +281,16 @@ describe('client', () => {
 		const client = await createClient(`ws://127.0.0.1:${port}`);
 		client.request('say');
 	});
+
+	test('client.requestClose()', async () => {
+		const port = 3000;
+		const server = await createServer({ port });
+		const client = await createClient(`ws://127.0.0.1:${port}`);
+		const wss = server.wss();
+		expect(!!wss._server).toBe(true);
+		await client.requestClose();
+		expect(!!wss._server).toBe(false);
+	});
 });
 
 describe('Server.create()', () => {

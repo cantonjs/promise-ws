@@ -7,3 +7,5 @@ export function isObject(target) {
 }
 
 export function noop() {}
+
+export const CLOSE_SIGNAL = '__WS_CLOSE_SIGNAL__';

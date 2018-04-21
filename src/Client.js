@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import delay from 'delay';
-import { isFunction, noop } from './utils';
+import { isFunction, noop, CLOSE_SIGNAL } from './utils';
 
 const parseOptions = function parseOptions(addressOrOptions) {
 	if (typeof addressOrOptions === 'string') {
@@ -116,14 +116,7 @@ export default class Client extends EventEmitter {
 					response(responseData);
 				}
 			}
-			catch (err) {
-				/* istanbul ignore next */
-
-				// this._replyEmitter.emit('message', message);
-
-				// TODO
-				console.error(err);
-			}
+			catch (err) {}
 		});
 
 		if (isFunction(onClose)) {
@@ -245,6 +238,34 @@ export default class Client extends EventEmitter {
 							reject(err);
 						}
 					});
+			}
+			catch (err) {
+				/* istanbul ignore next */
+				reject(err);
+			}
+		});
+	}
+
+	requestClose() {
+		return new Promise((resolve, reject) => {
+			try {
+				const ws = this._ws;
+				ws.send(CLOSE_SIGNAL, (err) => {
+					/* istanbul ignore if */
+					if (err) {
+						reject(err);
+					}
+					else {
+						const handleClose = (closeEvent) => {
+							/* istanbul ignore else */
+							if (closeEvent && closeEvent.code === 1006) {
+								this.removeListener('message', handleClose);
+								resolve();
+							}
+						};
+						ws.addEventListener('close', handleClose);
+					}
+				});
 			}
 			catch (err) {
 				/* istanbul ignore next */

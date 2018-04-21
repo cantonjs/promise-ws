@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 import EventEmitter from 'events';
 import pify from 'pify';
 import Client from './Client';
-import { noop, isObject } from './utils';
+import { noop, isObject, CLOSE_SIGNAL } from './utils';
 
 export default class Server extends EventEmitter {
 	static async create(options) {
@@ -46,6 +46,12 @@ export default class Server extends EventEmitter {
 
 			ws.on('close', () => {
 				this.clients.delete(ws);
+			});
+
+			ws.on('message', async (message) => {
+				if (message === CLOSE_SIGNAL) {
+					await this.close();
+				}
 			});
 
 			const client = new Client(ws);
