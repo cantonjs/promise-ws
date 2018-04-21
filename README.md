@@ -348,7 +348,7 @@ Request to all clients and wait for reply.
 
 ### client#requestClose()
 
-Request and wait for close server.
+Request to close server, will return a promise to wait for completion.
 
 ### client#ws()
 
