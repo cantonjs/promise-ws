@@ -26,6 +26,7 @@ A promise based WebSocket implementation for Node.js. Built on top of
   * [server#removeReply\(name, response\)](#serverremovereplyname-response)
   * [server#replyCount\(name\)](#serverreplycountname)
   * [server#request\(name\[, ...args\]\)](#serverrequestname-args)
+  * [server#requestClose\(\)](#serverrequestclose)
   * [server#wss\(\)](#serverwss)
   * [server#close\(\)](#serverclose)
   * [server#clients](#serverclients)
@@ -344,6 +345,10 @@ Get reply function count by name.
 * `responseData` \<Promise\<Any\>/>: Response data by server replied
 
 Request to all clients and wait for reply.
+
+### client#requestClose()
+
+Request and wait for close server.
 
 ### client#ws()
 
