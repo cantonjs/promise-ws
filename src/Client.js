@@ -256,14 +256,27 @@ export default class Client extends EventEmitter {
 						reject(err);
 					}
 					else {
-						const handleClose = (closeEvent) => {
+						const handleCloseComplete = (closeEvent) => {
 							/* istanbul ignore else */
 							if (closeEvent && closeEvent.code === 1006) {
-								this.removeListener('message', handleClose);
+								removeCloseListeners();
 								resolve();
 							}
 						};
-						ws.addEventListener('close', handleClose);
+						const handleCloseRejection = (messageEvent) => {
+							const message = messageEvent && messageEvent.data;
+							/* istanbul ignore else */
+							if (message === 'REJECT TO CLOSE') {
+								removeCloseListeners();
+								reject(new Error(message));
+							}
+						};
+						const removeCloseListeners = () => {
+							this.removeListener('close', handleCloseComplete);
+							this.removeListener('message', handleCloseRejection);
+						};
+						ws.addEventListener('close', handleCloseComplete);
+						ws.addEventListener('message', handleCloseRejection);
 					}
 				});
 			}

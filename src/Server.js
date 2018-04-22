@@ -34,6 +34,7 @@ export default class Server extends EventEmitter {
 		this.clients = new Map();
 		this._wss = wss;
 		this._emitter = new EventEmitter();
+		this._closeEmitter = new EventEmitter();
 
 		/* istanbul ignore next */
 		function heartbeat() {
@@ -41,6 +42,9 @@ export default class Server extends EventEmitter {
 		}
 
 		wss.on('connection', (ws) => {
+			const client = new Client(ws);
+			this.clients.set(ws, client);
+
 			ws.isAlive = true;
 			ws.on('pong', heartbeat);
 
@@ -48,15 +52,12 @@ export default class Server extends EventEmitter {
 				this.clients.delete(ws);
 			});
 
-			ws.on('message', async (message) => {
+			ws.on('message', (message) => {
 				if (message === CLOSE_SIGNAL) {
-					this.emit('requestClose', ws);
-					await this.close();
+					this.emit('requestClose', client);
+					this._closeEmitter.emit(CLOSE_SIGNAL, client);
 				}
 			});
-
-			const client = new Client(ws);
-			this.clients.set(ws, client);
 
 			const emitter = this._emitter;
 
@@ -68,6 +69,10 @@ export default class Server extends EventEmitter {
 					client.addReply(type, listener);
 				});
 			});
+
+			// this._closeEmitter.listeners(CLOSE_SIGNAL).forEach((listener) => {
+			// 	client.requestClose(listener);
+			// });
 		});
 
 		/* istanbul ignore next */
@@ -111,6 +116,17 @@ export default class Server extends EventEmitter {
 		this._emitter.addListener(type, listener);
 		this._forEach((client) => {
 			client.onReply(type, listener);
+		});
+		return this;
+	}
+
+	onReplyClose(listener) {
+		this._closeEmitter.addListener(CLOSE_SIGNAL, async (client) => {
+			const shouldClose = await listener(client);
+			if (shouldClose) await this.close();
+			else {
+				client.ws().send('REJECT TO CLOSE');
+			}
 		});
 		return this;
 	}
