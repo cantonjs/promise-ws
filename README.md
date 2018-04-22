@@ -25,6 +25,7 @@ A promise based WebSocket implementation for Node.js. Built on top of
   * [server#reply\(name, response\)](#serverreplyname-response)
   * [server#removeReply\(name, response\)](#serverremovereplyname-response)
   * [server#replyCount\(name\)](#serverreplycountname)
+  * [server#replyClose\(shouldClose\)](#serverreplycloseshouldclose)
   * [server#request\(name\[, ...args\]\)](#serverrequestname-args)
   * [server#wss\(\)](#serverwss)
   * [server#close\(\)](#serverclose)
@@ -137,6 +138,12 @@ Remove a reply function.
 1.  `name` \<String\>: The name of the event
 
 Get reply function count by name.
+
+### server#onReplyClose(shouldClose)
+
+1.  `shouldClose` \<Function\>: The callback function to decide to close or not. Should return a promise with a Boolean.
+
+Add a reply to close function. Will be called when client calls `requestClose()`. If `shouldClose` returns `true`, the server will be closed.
 
 ### server#request(name[, ...args])
 
