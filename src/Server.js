@@ -33,7 +33,7 @@ export default class Server extends EventEmitter {
 
 		this.clients = new Map();
 		this._wss = wss;
-		this._names = new Map();
+		this._emitter = new EventEmitter();
 
 		/* istanbul ignore next */
 		function heartbeat() {
@@ -50,6 +50,7 @@ export default class Server extends EventEmitter {
 
 			ws.on('message', async (message) => {
 				if (message === CLOSE_SIGNAL) {
+					this.emit('requestClose', ws);
 					await this.close();
 				}
 			});
@@ -57,9 +58,14 @@ export default class Server extends EventEmitter {
 			const client = new Client(ws);
 			this.clients.set(ws, client);
 
-			this._names.forEach((listeners, name) => {
-				listeners.forEach((listener) => {
-					client.addReply(name, listener);
+			const emitter = this._emitter;
+
+			/* istanbul ignore next */
+			const types = emitter.eventNames() || Object.keys(emitter._events);
+
+			types.forEach((type) => {
+				emitter.listeners(type).forEach((listener) => {
+					client.addReply(type, listener);
 				});
 			});
 		});
@@ -76,9 +82,7 @@ export default class Server extends EventEmitter {
 			});
 		}, 30000);
 
-		const forward = (eventType) => {
-			wss.on(eventType, this.emit.bind(this, eventType));
-		};
+		const forward = (type) => wss.on(type, this.emit.bind(this, type));
 
 		this.on('error', noop);
 
@@ -103,20 +107,10 @@ export default class Server extends EventEmitter {
 		wss.on('error', callback);
 	}
 
-	onReply(name, listener) {
-		const listeners = (function (names) {
-			if (names.has(name)) {
-				return names.get(name);
-			}
-			const newListeners = new Set();
-			names.set(name, newListeners);
-			return newListeners;
-		})(this._names);
-
-		listeners.add(listener);
-
+	onReply(type, listener) {
+		this._emitter.addListener(type, listener);
 		this._forEach((client) => {
-			client.onReply(name, listener);
+			client.onReply(type, listener);
 		});
 		return this;
 	}
@@ -129,9 +123,8 @@ export default class Server extends EventEmitter {
 		return this.onReply(...args);
 	}
 
-	replyCount(name) {
-		const names = this._names;
-		return names.has(name) ? names.get(name).size : 0;
+	replyCount(type) {
+		return this._emitter.listenerCount(type);
 	}
 
 	_createClientsIterator(iterator) {
@@ -156,18 +149,11 @@ export default class Server extends EventEmitter {
 		this._wss.clients.forEach(this._createClientsIterator(iterator));
 	}
 
-	removeReply(name, listener) {
+	removeReply(type, listener) {
 		/* istanbul ignore else */
-		if (this._names.has(name)) {
-			const listeners = this._names.get(name);
-			listeners.delete(listener);
-			if (!listeners.size) {
-				this._names.delete(name);
-			}
-		}
-
+		this._emitter.removeListener(type, listener);
 		this._forEach((client) => {
-			client.removeReply(name, listener);
+			client.removeReply(type, listener);
 		});
 		return this;
 	}
