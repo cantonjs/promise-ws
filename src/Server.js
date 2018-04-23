@@ -62,7 +62,10 @@ export default class Server extends EventEmitter {
 			const emitter = this._emitter;
 
 			/* istanbul ignore next */
-			const types = emitter.eventNames() || Object.keys(emitter._events);
+			const types =
+				typeof emitter.eventNames === 'function' ?
+					emitter.eventNames() :
+					Object.keys(emitter._events);
 
 			types.forEach((type) => {
 				emitter.listeners(type).forEach((listener) => {
