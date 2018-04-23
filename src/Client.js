@@ -291,7 +291,7 @@ export default class Client extends EventEmitter {
 		return this._ws;
 	}
 
-	close() {
+	async close() {
 		this._ws && this._ws.terminate();
 		this._ws = null;
 	}
