@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import EventEmitter from 'events';
 import delay from 'delay';
 import { isFunction, noop, CLOSE_SIGNAL } from './utils';
 
@@ -12,7 +13,7 @@ const parseOptions = function parseOptions(addressOrOptions) {
 	}
 };
 
-export default class Client extends WebSocket {
+export default class Client extends EventEmitter {
 	static create(addressOrOptions, handlers = {}) {
 		return new Promise((resolve, reject) => {
 			const { address, protocols, options } = parseOptions(addressOrOptions);
