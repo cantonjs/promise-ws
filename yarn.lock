@@ -1424,7 +1424,7 @@ del@^2.0.2:
 
 delay@^3.0.0:
   version "3.0.0"
-  resolved "http://registry.npm.taobao.org/delay/download/delay-3.0.0.tgz#97fc5c21028e20616e822ab11838c648808534eb"
+  resolved "https://registry.npmjs.org/delay/-/delay-3.0.0.tgz#97fc5c21028e20616e822ab11838c648808534eb"
 
 delayed-stream@~1.0.0:
   version "1.0.0"
@@ -5037,7 +5037,7 @@ ws@^5.2.0:
 
 ws@^6.0.0:
   version "6.0.0"
-  resolved "http://registry.npm.taobao.org/ws/download/ws-6.0.0.tgz#eaa494aded00ac4289d455bac8d84c7c651cef35"
+  resolved "https://registry.npmjs.org/ws/-/ws-6.0.0.tgz#eaa494aded00ac4289d455bac8d84c7c651cef35"
   dependencies:
     async-limiter "~1.0.0"
 
