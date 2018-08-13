@@ -68,8 +68,8 @@ $ npm install promise-ws ws
 - `websocket.ping([data[, mask]])` returns a promise
 - `websocket.pong([data[, mask]])` returns a promise
 - `websocket.send(data[, options])` returns a promise
-- new `WebSocket.Server.create(options)`, returns a promise of listened `WebSocket.Server` instance
-- new `WebSocket.create(options)`, returns a promise of opened `WebSocket` instance
+- 🆕 `WebSocket.Server.create(options)`, returns a promise of listened `WebSocket.Server` instance
+- 🆕 `WebSocket.create(options)`, returns a promise of opened `WebSocket` instance
 
 For more WebSocket API, please checkout the [API doc](https://github.com/websockets/ws/blob/master/doc/ws.md).
 

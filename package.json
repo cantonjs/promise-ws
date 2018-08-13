@@ -24,10 +24,6 @@
     "websocket",
     "ws",
     "promise",
-    "io",
-    "request",
-    "response",
-    "connect",
     "socket"
   ],
   "license": "MIT",
