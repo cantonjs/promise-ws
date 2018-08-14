@@ -58,7 +58,7 @@ import WebSocket from "promise-ws";
 ## Installation
 
 ```bash
-$ npm install promise-ws ws
+$ npm install promise-ws
 ```
 
 ## API Reference
